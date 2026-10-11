@@ -48,7 +48,7 @@ authentication.
       rules (including the different-accounts rule), and changes `updated_at`.
 - [ ] `DELETE /transfers/:id` returns `204`, and a later `GET` of that id returns
       `404`.
-- [ ] Unit tests pass (`npm test`): `TransferService` business rules with a mocked
-      `DatabasePort`, and the mapper's `Transfer` case.
-- [ ] Manual check: all five endpoints work from Postman against the real SQLite
+- [ ] Unit tests pass (`npm test`): `TransferService` business rules with mocked
+      repositories, and the mapper's `Transfer` case.
+- [ ] Manual check: all five endpoints work from an HTTP client against the real SQLite
       database.

@@ -12,12 +12,12 @@ comes later, in issue 08, once transactions exist.
 **Depends on:** 02 (database module and `account` table).
 
 **Scope.**
-- An `account/` module with an `Account` entity, DTOs, a controller, and a service.
+- An `account/` module with an `Account` entity, DTOs, a controller, a service, and a repository.
 - Endpoints: `POST /accounts`, `GET /accounts`, `GET /accounts/:id`,
   `PATCH /accounts/:id`, `DELETE /accounts/:id`.
 - Fields:
   - `name` (required)
-  - `accountType` (required): `Checking`, `Saving`, `Investment`, or `Credit Card`
+  - `accountType` (required): `Checking`, `Saving`, `Investment`, or `Credit`
   - `openingBalance`: in dollars, 0 or more, defaulting to 0. Stored as integer cents
     in `opening_balance_cents`, rounded to the nearest cent.
 - All balances are positive by convention. A credit card's opening balance is the
@@ -44,6 +44,6 @@ authentication.
 - [ ] `PATCH /accounts/:id` updates only the fields sent and changes `updated_at`.
 - [ ] `DELETE /accounts/:id` returns `204`, or `409` if a transaction uses the
       account.
-- [ ] Unit tests pass (`npm test`): `AccountService` business rules with a mocked
-      `DatabasePort`, and the dollars-to-cents conversion.
-- [ ] Manual check: all endpoints work from Postman against the real SQLite database.
+- [ ] Unit tests pass (`npm test`): `AccountService` business rules with mocked
+      repositories, and the dollars-to-cents conversion.
+- [ ] Manual check: all endpoints work from an HTTP client against the real SQLite database.

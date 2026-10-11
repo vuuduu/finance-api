@@ -5,7 +5,7 @@
 **Context.** finance-api is a personal finance API for tracking expenses, income,
 transfers, accounts, and budgets. It's built with NestJS and TypeScript, and stores
 data in SQLite. Phase 1 is a vertical build: every module is built end to end, from
-HTTP to the database, and every endpoint is callable from Postman. This issue
+HTTP to the database, and every endpoint is callable from an HTTP client. This issue
 creates the empty NestJS project that every later issue builds on.
 
 **Depends on:** nothing. This is the first issue.
@@ -26,10 +26,12 @@ creates the empty NestJS project that every later issue builds on.
 
 ## Acceptance Criteria
 
-- [ ] `npm install` completes without errors.
-- [ ] `npm run start:dev` starts the app on port 3000.
-- [ ] `GET http://localhost:3000/` returns `200` from Postman.
-- [ ] `npm test` passes (the scaffold's default test).
-- [ ] `.gitignore` contains `.vibe-wise/`, `.data/`, `node_modules/`, and `dist/`.
-- [ ] `git status` doesn't list `.vibe-wise/`.
-- [ ] A global `ValidationPipe` is registered in `main.ts`.
+- [x] `npm install` completes without errors.
+- [x] `npm run start:dev` starts the app on port 3000.
+- [x] `GET http://localhost:3000/` returns `200` from an HTTP client.
+- [x] `npm test` passes (the scaffold's default test).
+- [x] `.gitignore` contains `.vibe-wise/`, `.data/`, `node_modules/`, and `dist/`.
+- [x] `git status` doesn't list `.vibe-wise/`.
+- [x] A global `ValidationPipe` is registered in `main.ts`, with `whitelist: true`
+      (unknown body fields are stripped) and `transform: true` (DTOs arrive as class
+      instances, and route and query params are converted to their declared types).

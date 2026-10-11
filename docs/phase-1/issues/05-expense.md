@@ -20,6 +20,8 @@ Income (06) and Transfer (07) will reuse.
 - `expense/`: an `Expense` entity that extends `Transaction` and adds `vendor` and
   `accountFrom`.
 - `expense/`: DTOs that validate incoming requests, plus a controller and a service.
+- A repository for `"transaction"` rows. **Open decision for this issue:** one shared
+  repository in `transaction/` used by Expense, Income, and Transfer, or one per type.
 - Endpoints: `POST /expenses`, `GET /expenses`, `GET /expenses/:id`,
   `PATCH /expenses/:id`, `DELETE /expenses/:id`.
 - Business rules:
@@ -53,8 +55,8 @@ account balance, authentication, and `runInTransaction` (deferred).
       rules, and changes `updated_at`.
 - [ ] `DELETE /expenses/:id` returns `204`, and a later `GET` of that id returns `404`.
 - [ ] Unit tests pass (`npm test`):
-  - `ExpenseService` business rules, with a mocked `DatabasePort`
+  - `ExpenseService` business rules, with mocked repositories
   - The mapper: a row converts to an `Expense` and back, and `12.77` converts to
     `1277` (not `1276`).
-- [ ] Manual check: all five endpoints work from Postman against the real SQLite
+- [ ] Manual check: all five endpoints work from an HTTP client against the real SQLite
       database.

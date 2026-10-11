@@ -12,7 +12,7 @@ Salary. Default categories come pre-loaded, and users can add their own.
 **Depends on:** 02 (database module and `category` table).
 
 **Scope.**
-- A `category/` module with a `Category` entity, DTOs, a controller, and a service.
+- A `category/` module with a `Category` entity, DTOs, a controller, a service, and a repository.
 - Endpoints: `POST /categories`, `GET /categories`, `GET /categories/:id`,
   `PATCH /categories/:id`, `DELETE /categories/:id`.
 - `GET /categories?transactionType=Expense` returns only categories of that type.
@@ -52,6 +52,6 @@ Salary. Default categories come pre-loaded, and users can add their own.
       transaction uses.
 - [ ] `DELETE /categories/:id` returns `204`, or `409` if a transaction uses the
       category.
-- [ ] Unit tests pass (`npm test`): `CategoryService` business rules with a mocked
-      `DatabasePort`, and seeding that inserts only the missing defaults.
-- [ ] Manual check: all endpoints work from Postman against the real SQLite database.
+- [ ] Unit tests pass (`npm test`): `CategoryService` business rules with mocked
+      repositories, and seeding that inserts only the missing defaults.
+- [ ] Manual check: all endpoints work from an HTTP client against the real SQLite database.

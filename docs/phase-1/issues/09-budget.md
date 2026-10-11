@@ -12,8 +12,8 @@ tells its own story about its own period.
 **Depends on:** 03 (Category), 05 (Expense).
 
 **Scope.**
-- A `budget/` module with `Budget` and `BudgetItem` entities, DTOs, controllers, and a
-  service.
+- A `budget/` module with `Budget` and `BudgetItem` entities, DTOs, controllers, a
+  service, and a repository.
 - Budget endpoints: `POST /budgets`, `GET /budgets`, `GET /budgets/:id`,
   `PATCH /budgets/:id`, `DELETE /budgets/:id`.
 - Budget item endpoints: `POST /budgets/:id/items`, `GET /budgets/:id/items`,
@@ -58,6 +58,6 @@ budgets, and authentication.
 - [ ] `DELETE /budgets/:id` returns `204` and removes its items.
 - [ ] Unit tests pass (`npm test`): `BudgetService` business rules and the
       spent/remaining logic (including both date boundaries and overlapping budgets),
-      with a mocked `DatabasePort`.
-- [ ] Manual check: from Postman, create the budget and expenses in the examples above
+      with mocked repositories.
+- [ ] Manual check: from an HTTP client, create the budget and expenses in the examples above
       and confirm the numbers.
