@@ -46,7 +46,7 @@ report (Phase 2), and authentication.
       and changes `updated_at`.
 - [ ] `DELETE /incomes/:id` returns `204`, and a later `GET` of that id returns `404`.
 - [ ] The expense endpoints from issue 05 still return only expenses.
-- [ ] Unit tests pass (`npm test`): `IncomeService` business rules with a mocked
-      `DatabasePort`, and the mapper's `Income` case.
-- [ ] Manual check: all five endpoints work from Postman against the real SQLite
+- [ ] Unit tests pass (`npm test`): `IncomeService` business rules with mocked
+      repositories, and the mapper's `Income` case.
+- [ ] Manual check: all five endpoints work from an HTTP client against the real SQLite
       database.

@@ -14,7 +14,7 @@ card, the balance is the amount owed, so its formula is inverted.
 - Balance formulas, using all transaction types:
   - **Checking, Saving, Investment:**
     `opening_balance + SUM(amount where account_to = this account) − SUM(amount where account_from = this account)`
-  - **Credit Card:**
+  - **Credit:**
     `opening_balance + SUM(amount where account_from = this account) − SUM(amount where account_to = this account)`.
     Spending on the card increases the amount owed. A payment transfer to the card
     reduces it.
@@ -40,6 +40,6 @@ net report (Phase 2).
       read, with no other step needed.
 - [ ] A balance below zero is returned as a negative number without an error.
 - [ ] Unit tests pass (`npm test`): the balance logic for each account type, including
-      the two examples above, with a mocked `DatabasePort`.
-- [ ] Manual check: from Postman, create the transactions in the examples above and
+      the two examples above, with mocked repositories.
+- [ ] Manual check: from an HTTP client, create the transactions in the examples above and
       confirm the balances.
