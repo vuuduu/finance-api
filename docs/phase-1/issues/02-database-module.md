@@ -9,20 +9,59 @@ raw, parameterized SQL. Every later module stores its data through this module.
 
 **Depends on:** 01 (project setup).
 
-**⚠ Open decision. Make it before implementing.** The *shape* of `DatabasePort` hasn't
-been designed yet. This decision belongs to the project owner, so don't choose it for
-them. Questions to settle:
-- Is there one general port with low-level methods (run a SQL statement, fetch rows),
-  or a port per module (for example, a category repository port)?
-- Where do the SQL statements live: inside the SQLite adapter, or in each module?
-  This decides how much code must be rewritten for PostgreSQL later.
-- What will a mocked port look like in unit tests?
-- Note: TypeScript interfaces don't exist at runtime, so NestJS can't inject by
-  interface. The adapter must be registered under an injection token, or the port
-  must be an abstract class.
+**Persistence design (decided by the project owner, 2026-10-07).**
+
+Ports and layers:
+- `DatabasePort`: one low-level, async port. Services never depend on it or call it
+  directly. Methods (each takes `sql` and `params: SqlParam[]`, where
+  `SqlParam = string | number | null` fills one `?` placeholder):
+  - `insert` → the new row's id
+  - `run` (update or delete) → how many rows changed
+  - `get` → one row, or `undefined`
+  - `all` → an array of rows
+- `SqlBuilderPort`: repositories describe queries through it. Its adapter writes the
+  dialect-specific raw SQL. Its contract grows as repositories need new queries.
+- Repositories: one per module, concrete classes (not ports). They give services
+  domain-level methods, map rows to entities, and get both `DatabasePort` and
+  `SqlBuilderPort` injected.
+- Flow: Service → Repository → `SqlBuilderPort` + `DatabasePort` → SQLite adapters.
+
+Wiring:
+- `DatabaseModule.forRoot()` is a dynamic module that binds two `Symbol` injection
+  tokens, `DATABASE_CONNECTOR` and `SQL_BUILDER` (in `database.tokens.ts`), to adapters
+  chosen by `process.env.DB_TYPE`, and exports both tokens.
+- It's global and imported once, in `AppModule`, so the whole app shares one adapter
+  instance and one connection. Feature modules don't import it.
+- `DB_TYPE` unset or `sqlite`: SQLite adapters (the default). `DB_TYPE=postgres`:
+  PostgreSQL adapters (not built yet).
+- Any `DB_TYPE` without a valid adapter (a typo, or `postgres` before its adapter
+  exists) throws, and the app doesn't start.
+- Note: TypeScript interfaces don't exist at runtime, which is why the ports are bound
+  to tokens.
+
+Startup and shutdown:
+- The SQLite `DatabasePort` adapter does its setup in `onModuleInit`: it creates the
+  `.data/` folder if it's missing, opens the database file (`better-sqlite3` creates the
+  file if it doesn't exist), runs `PRAGMA foreign_keys = ON`, and creates the tables.
+  Each dialect's adapter owns its own table definitions (`sqlite/sqlite-schema.ts`).
+- `.data/` is resolved from the folder the app is started in (the repo root).
+- `onModuleDestroy` closes the connection.
+- The adapter's methods stay `async` even though `better-sqlite3` is synchronous, so
+  every failure reaches callers as a rejected promise, as with an async driver. ESLint's
+  `require-await` is turned off around those methods for that reason.
+
+Testing:
+- Unit tests only for now; integration tests come later.
+- Service specs mock the repositories. Repository specs mock the ports.
+- Example: `ExpenseService` with an account that doesn't exist → the fake
+  `AccountRepository` returns `undefined` → expect a not-found error, and the insert is
+  never called.
+- Accepted risk: no automated test runs the generated SQL against a real database, so
+  the schema constraints stay unverified until integration tests exist.
 
 **Scope.**
-- A `persistence/` module that provides the `DatabasePort` and its SQLite adapter.
+- A `src/database/` module (the dynamic database module) that provides `DatabasePort` and
+  `SqlBuilderPort` and their SQLite adapters.
 - The database file is `.data/finance.db`. Create the `.data/` folder if it doesn't
   exist.
 - Run `PRAGMA foreign_keys = ON` when the connection opens. SQLite turns foreign keys
@@ -33,7 +72,7 @@ them. Questions to settle:
     `is_default INTEGER NOT NULL DEFAULT 0`, `created_at`, `updated_at`,
     `UNIQUE (name, transaction_type)`
   - `account`: `id INTEGER PRIMARY KEY`, `name TEXT NOT NULL`,
-    `account_type TEXT NOT NULL CHECK (account_type IN ('Checking','Saving','Investment','Credit Card'))`,
+    `account_type TEXT NOT NULL CHECK (account_type IN ('Checking','Saving','Investment','Credit'))`,
     `opening_balance_cents INTEGER NOT NULL DEFAULT 0 CHECK (opening_balance_cents >= 0)`,
     `created_at`, `updated_at`
   - `"transaction"`: `id INTEGER PRIMARY KEY`,
@@ -60,20 +99,29 @@ them. Questions to settle:
   (issues 08 and 09).
 
 **Out of scope:** `runInTransaction` (deferred; Phase 1 writes are single-row),
-migrations, the PostgreSQL adapter, and any feature module's queries (each module adds
-its own in its issue, following the port design chosen above).
+migrations, the PostgreSQL adapters, integration tests, repositories, and any feature
+module's queries (each module adds its own repository and the `SqlBuilderPort` methods it
+needs in its own issue).
 
 ## Acceptance Criteria
 
-- [ ] The `DatabasePort` shape has been decided by the project owner and is written
-      down in this issue before implementation starts.
-- [ ] Starting the app creates `.data/finance.db` if it's missing.
-- [ ] Restarting the app keeps existing data and doesn't fail because the tables
+- [x] The persistence design has been decided by the project owner and is written down
+      in this issue before implementation starts.
+- [x] Starting the app creates `.data/` and `.data/finance.db` if they're missing.
+- [x] Restarting the app keeps existing data and doesn't fail because the tables
       already exist.
-- [ ] All five tables exist with the columns and constraints listed above.
-- [ ] `PRAGMA foreign_keys` returns `1` on the app's connection.
-- [ ] Inserting a transaction with a `category_id` that doesn't exist fails.
-- [ ] Inserting a transaction with `type = 'Expence'` (a typo) fails.
-- [ ] Deleting a budget also deletes its budget items.
-- [ ] Tests pass (`npm test`). They cover schema creation and the constraints above,
-      using an in-memory SQLite database (`:memory:`) so the real file isn't touched.
+- [x] The `CREATE TABLE` statements define all five tables with the columns and
+      constraints listed above.
+- [x] With `DB_TYPE` unset, the SQLite adapters are bound to `DATABASE_CONNECTOR` and
+      `SQL_BUILDER`.
+- [x] With `DB_TYPE` set to a value that has no adapter (for example `postgres` or
+      `sqlit`), the app fails to start with a clear error.
+- [x] Tests pass (`npm test`). `database.module.spec.ts` covers the `DB_TYPE` binding and
+      both failure cases. It builds the module without starting it, so no test opens a
+      real database.
+
+**Deferred until integration tests exist** (accepted risk): `PRAGMA foreign_keys`
+returns `1`; inserting a transaction with a missing `category_id` fails; inserting
+`type = 'Expence'` fails the `CHECK`; deleting a budget deletes its budget items. A
+one-off manual script confirmed all four on 2026-10-08, but no automated test covers
+them.
